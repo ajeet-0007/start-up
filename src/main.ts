@@ -1,9 +1,10 @@
-import { NestFactory } from '@nestjs/core';
+import { HttpAdapterHost, NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { setupSwagger } from './modules/common/swagger/swagger.config';
 import { AllExceptionsFilter } from './modules/common/exceptions/all-exceptions.filter';
 import { ValidationPipe } from '@nestjs/common';
 import helmet from 'helmet';
+import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -16,6 +17,7 @@ async function bootstrap() {
 
   // 3. Use Helmet to secure HTTP headers
   app.use(helmet());
+  app.useLogger(app.get(WINSTON_MODULE_NEST_PROVIDER));
 
   // 4. Global Validation Pipe
   //    - whitelist: strip properties that don't have any decorators
@@ -31,7 +33,13 @@ async function bootstrap() {
   );
 
   // 5. Global Exception Filter
-  app.useGlobalFilters(new AllExceptionsFilter());
+  const httpAdapterHost = app.get(HttpAdapterHost);
+  app.useGlobalFilters(
+    new AllExceptionsFilter(
+      httpAdapterHost,
+      app.get(WINSTON_MODULE_NEST_PROVIDER),
+    ),
+  );
 
   // 6. Swagger setup at /api/docs
   setupSwagger(app);

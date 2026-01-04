@@ -31,10 +31,12 @@
     "class-validator": "^0.14.2",
     "helmet": "^8.1.0",
     "mysql2": "^3.14.1",
+    "nest-winston": "^1.10.2",
     "reflect-metadata": "^0.2.0",
     "rxjs": "^7.8.1",
     "swagger-ui-express": "^5.0.1",
-    "typeorm": "^0.3.24"
+    "typeorm": "^0.3.24",
+    "winston": "^3.19.0"
   },
   "devDependencies": {
     "@nestjs/cli": "^10.0.0",

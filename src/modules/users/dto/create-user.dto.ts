@@ -1,12 +1,9 @@
-import { ApiProperty, OmitType } from '@nestjs/swagger';
-import { Expose } from 'class-transformer';
-import { IsNotEmpty, IsString } from 'class-validator';
+import { OmitType } from '@nestjs/swagger';
 import { UserDto } from './user.dto';
 
-export class CreateUserDto extends OmitType(UserDto, ['id']) {
-  @ApiProperty({ required: true, description: 'Name of the user' })
-  @IsNotEmpty()
-  @IsString()
-  @Expose()
-  name: string;
-}
+export class CreateUserDto extends OmitType(UserDto, [
+  'id',
+  'created',
+  'updated',
+  'deleted',
+]) {}

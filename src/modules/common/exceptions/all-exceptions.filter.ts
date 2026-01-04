@@ -1,62 +1,68 @@
 import {
-  ExceptionFilter,
   Catch,
   ArgumentsHost,
-  HttpException,
   HttpStatus,
-  Logger,
+  ExceptionFilter,
+  HttpException,
+  Inject,
+  LoggerService,
 } from '@nestjs/common';
-import { Request, Response } from 'express';
-
+import { HttpAdapterHost } from '@nestjs/core';
+import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
+import { CustomException } from './custom-exception';
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
-  private readonly logger = new Logger(AllExceptionsFilter.name);
-
-  catch(exception: unknown, host: ArgumentsHost) {
+  constructor(
+    private readonly httpAdapterHost: HttpAdapterHost,
+    @Inject(WINSTON_MODULE_NEST_PROVIDER)
+    private readonly logger: LoggerService,
+  ) {}
+  catch(exception: any, host: ArgumentsHost) {
+    const { httpAdapter } = this.httpAdapterHost;
     const ctx = host.switchToHttp();
-    const response = ctx.getResponse<Response>();
-    const request = ctx.getRequest<Request>();
-
-    // Determine status code
-    const isHttpException = exception instanceof HttpException;
-    const status = isHttpException
-      ? exception.getStatus()
-      : HttpStatus.INTERNAL_SERVER_ERROR;
-
-    // Extract error message and error name
-    let message = (
-      isHttpException
-        ? (exception.getResponse() as any)?.message || exception.message
-        : (exception as Error).message
-    ) as string | string[];
-
-    // If class-validator sent an array of errors, flatten it
-    if (Array.isArray(message)) {
-      message = (message as string[]).join('; ');
+    let httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+    let message: string | object = 'Internal server error';
+    if (exception instanceof HttpException) {
+      httpStatus = exception.getStatus();
+      const response = exception.getResponse();
+      message = message = (response as any)['message'] || response;
     }
-
-    const errorResponse = {
-      statusCode: status,
-      timestamp: new Date().toISOString(),
-      path: request.url,
-      method: request.method,
-      message: message || 'Internal server error',
-      error: isHttpException
-        ? (exception as HttpException).name
-        : HttpStatus[status as unknown as keyof typeof HttpStatus],
-      // Include stack trace in development only
-      ...(process.env.NODE_ENV === 'development' && {
-        stack: (exception as Error).stack,
-      }),
+    if (exception instanceof CustomException) {
+      httpStatus = HttpStatus.BAD_REQUEST;
+      message = [exception.message]; // Set custom error code in the headers
+      const customCode = exception.code.toString().slice(-3);
+      httpStatus = Number(customCode);
+    }
+    try {
+      const request = ctx.getRequest();
+      this.logger.error(
+        request.originalUrl,
+        {
+          body: request?.body,
+          headers: request?.headers,
+          params: request?.params,
+          query: request?.query,
+          user: request?.user,
+          exception,
+        },
+        'ApplicationError',
+      );
+    } catch (err) {
+      this.logger.error(message, exception);
+    }
+    const responseBody = {
+      error: true,
+      messages: message,
+      value:
+        process.env.NODE_ENV === 'development'
+          ? {
+              method: httpAdapter.getRequestMethod(ctx.getRequest()),
+              timestamp: new Date().toISOString(),
+              path: httpAdapter.getRequestUrl(ctx.getRequest()),
+              exception: exception,
+            }
+          : {},
     };
-
-    // Log full exception
-    this.logger.error(
-      `${request.method} ${request.url}`,
-      JSON.stringify(errorResponse),
-      (exception as Error).stack,
-    );
-
-    response.status(status).json(errorResponse);
+    httpAdapter.reply(ctx.getResponse(), responseBody, httpStatus);
   }
 }

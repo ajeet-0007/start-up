@@ -5,6 +5,9 @@ import { UsersModule } from './modules/users/users.module';
 import { DatabaseModule } from './modules/common/database/database.module';
 import { ConfigModule } from '@nestjs/config';
 import { ProductsModule } from './modules/products/products.module';
+import { TransformInterceptor } from './modules/common/interceptors/transform.interceptor';
+import { APP_INTERCEPTOR } from '@nestjs/core';
+import { WinstonModule } from 'nest-winston';
 
 @Module({
   imports: [
@@ -14,8 +17,15 @@ import { ProductsModule } from './modules/products/products.module';
     UsersModule,
     DatabaseModule,
     ProductsModule,
+    WinstonModule.forRoot({}),
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: TransformInterceptor,
+    },
+  ],
 })
 export class AppModule {}
