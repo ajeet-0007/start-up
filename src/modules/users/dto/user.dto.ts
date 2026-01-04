@@ -62,10 +62,10 @@ export class UserDto {
   @Expose()
   isActive: boolean;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsInt()
   @Expose()
-  loyaltyPointsBalance: number;
+  loyaltyPointsBalance?: number;
 
   @IsNotEmpty()
   @IsObject()
