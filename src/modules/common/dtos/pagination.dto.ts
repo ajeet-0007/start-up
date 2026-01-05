@@ -19,7 +19,7 @@ export class PaginationDto {
 
   constructor(partial: Partial<PaginationDto>) {
     Object.assign(this, partial);
-    this.page = this.page ?? 1;
-    this.limit = this.limit ?? 50;
+    this.page = this.page || 1;
+    this.limit = this.limit || 50;
   }
 }

@@ -57,6 +57,19 @@ export class UsersService {
         skip,
         take,
         order,
+        select: [
+          'id',
+          'username',
+          'email',
+          'firstName',
+          'lastName',
+          'phone',
+          'isActive',
+          'loyaltyPointsBalance',
+          'createdAt',
+          'updatedAt',
+          'deletedAt',
+        ],
       }),
       this.repo.count({ where }),
     ]);
@@ -81,6 +94,19 @@ export class UsersService {
 
     const user = await this.repo.findOne({
       where,
+      select: [
+        'id',
+        'username',
+        'email',
+        'firstName',
+        'lastName',
+        'phone',
+        'isActive',
+        'loyaltyPointsBalance',
+        'createdAt',
+        'updatedAt',
+        'deletedAt',
+      ],
     });
     // If no user is found, throw a custom exception
     if (!user) {

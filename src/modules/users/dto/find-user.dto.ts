@@ -6,6 +6,7 @@ import {
   IsArray,
   IsEmail,
   IsEnum,
+  IsNotEmpty,
   IsOptional,
   IsString,
   ValidateNested,
@@ -41,7 +42,7 @@ class SortDto {
 }
 
 export class FindUserDto {
-  @IsOptional()
+  @IsNotEmpty()
   @Type(() => FilterDto)
   @ValidateNested()
   @Expose()
@@ -53,9 +54,9 @@ export class FindUserDto {
   @Expose()
   sort?: SortDto[];
 
-  @IsOptional()
+  @IsNotEmpty()
   @Type(() => PaginationDto)
-  @ValidateNested({ each: true })
+  @ValidateNested()
   @Expose()
   pagination?: PaginationDto;
 
