@@ -24,7 +24,7 @@ export class TransformInterceptor<T>
   ): Observable<Response<T>> {
     return next.handle().pipe(
       map((data) => {
-        if (!data.pagination && !Array.isArray(data)) {
+        if (!data?.pagination && !Array.isArray(data)) {
           return {
             error: false,
             value: data,
